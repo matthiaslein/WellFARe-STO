@@ -23,21 +23,20 @@ def clm(l1, l2, L, m1, m2, M):
 		kd = 0
 	value = 0.0
 	if L >= M:
-		tvalue = np.array([])
-		#tvalue = np.array([],dtype=np.longdouble)
+		tvalue = []
 		lower = max(0, (l1-m1-(L-M)), (l2+m2-(L+M)))
 		upper = min((l1-m1),(l2+m2),(l1+l2-L))
 		for t in range(lower, upper+1):
 			interim = ((-1) ** t)*scipy.special.binom(l1+l2-L,t)
 			interim = interim * scipy.special.binom(L-M,l1-m1-t)
 			interim = interim * scipy.special.binom(L+M,l2+m2-t)
-			tvalue=np.append(tvalue,interim)
+			tvalue.append(interim)
 		interim = (2*l1+1) * (2*l2+1) * scipy.special.binom(l1+l2+L+1,l1-l2+L)
 		interim = interim*scipy.special.binom(l1+l2+L+1, l2-l1+L)
 		interim = interim*scipy.special.binom(2*l1,l1+m1)*scipy.special.binom(2*l2,l2+m2)
 		interim = 1.0/interim
-		interim = np.sqrt(interim*(2*L+1)*(2*L+1)*scipy.special.binom(l1+l2+L+1,l1+l2-L)*scipy.special.binom(2*L,L+M))
-		value = interim * np.sum(tvalue[np.argsort(np.absolute(tvalue))])
+		interim = np.sqrt(interim*(2*L+1)*(2*L+1)*scipy.special.binom(l1+l2+L+1,l1+l2-L)*scipy.special.binom(2*L,L+M)) 
+		value = interim * math.fsum(tvalue)
 		interim = (m1 + abs(m1) + m2 + abs(m2) + M + abs(M))/2
 		interim = (-1) ** interim
 		value = value * interim * kd
@@ -65,11 +64,9 @@ def tlm(a, l1, m1, l2, m2, theta, phi):
 	if y1 == y2 and em(m1, m2) == -1:
 		value = 0.0
 	else:
-		ivalue = np.array([])
-		#ivalue = np.array([],dtype=np.longdouble)
+		ivalue = []
 		for i in [-1, 1]:
-			Lvalue = np.array([])
-			#Lvalue = np.array([],dtype=np.longdouble)
+			Lvalue = []
 			for L in range(abs(l1-l2),l1+l2+1,2):
 				if i == int(em(m1,m2)):
 					kd4 = 1
@@ -79,17 +76,16 @@ def tlm(a, l1, m1, l2, m2, theta, phi):
 					kd5 = 1
 				else:
 					kd5 = 0
-				in1 = em(m1, 0) ** (kd4)
+				#in1 = em(m1, 0) ** (kd4)
+				in1 = em(i*y1+y2, m1) ** (kd4)
 				in2 = clm(l1, l2, L, i *y1, y2, i*y1 + y2)
 				in3 = clm(l1, l2, L, a, -a, 0)
 				in4 = np.sqrt(((2*math.pi)/(2*L+1))*(1+kd5))
 				in5 = slm(L, em(m1,m2)*abs(y2+i*y1),theta,phi)
-				inar=np.array([in1, in2, in3, in4, in5])
-				Lvalue=np.append(Lvalue,np.prod(inar))
-				#Lvalue=np.append(Lvalue,np.prod(inar[np.argsort(np.absolute(inar))][::-1]))
-			ivalue=np.append(ivalue,np.sum(Lvalue[np.argsort(np.absolute(Lvalue))]))
-		value = np.sum(ivalue[np.argsort(np.absolute(ivalue))]) * 2/((1+kd1) * np.sqrt((1+kd2)*(1+kd3)))
-	print("tlm {} {} {} {} {} {} {}: {: .20E}".format(a, l1, m1, l2, m2, theta, phi, value))
+				Lvalue.append(in1 * in2 * in3 * in4 * in5)
+			ivalue.append(math.fsum(Lvalue))
+		value = math.fsum(ivalue) * (2*((-1)**(y1+y2)))/((1+kd1) * np.sqrt((1+kd2)*(1+kd3)))
+	#print("tlm {} {} {} {} {} {} {}: {: .20E}".format(a, l1, m1, l2, m2, theta, phi, value))
 	return value
 
 def slm(l1, m1, theta, phi):
@@ -115,25 +111,23 @@ def Phi(m1, phi):
 	return value
 
 def plm(l, a, theta):
-	value = np.array([])
-	#value = np.array([],dtype=np.longdouble)
+	value = []
 	limit = (l - a - ((1-((-1)**(l-a)))/(2)))/2
 	for k in range(0, int(limit)+1):
 		interim = ((-1)**k)*scipy.special.binom(a+k,k)*scipy.special.binom(2*l-2*k,l-k)
 		interim = interim*scipy.special.binom(l-k,l-a-2*k)*(np.cos(theta)**(l-a-2*k))
-		value=np.append(value,interim)
+		value.append(interim)
 	interim = ((((-1)** a)*(np.sin(theta)**a))/(2 ** l))
 	interim = interim * np.sqrt((2*l+1)/(2*scipy.special.binom(l,a)*scipy.special.binom(l+a,a)))
-	value = interim * np.sum(value[np.argsort(np.absolute(value))])
+	value = interim * math.fsum(value)
 	#print("plm {} {} {}: {: .20E}".format(l, a, theta, value))
 	return value
 
 def An(k, p):
-	value = np.array([])
-	#value = np.array([],dtype=np.longdouble)
+	value = []
 	for j in range(0, k + 1):
-		value=np.append(value,(p ** j)/scipy.misc.factorial(j))
-	value = np.sum(value[np.argsort(np.absolute(value))]) * np.exp(-p) * ((scipy.misc.factorial(k))/(p ** (k + 1)))
+		value.append((p ** j)/scipy.misc.factorial(j))
+	value = math.fsum(value) * np.exp(-p) * ((scipy.misc.factorial(k))/(p ** (k + 1)))
 	#print("An ",k, p, " :", value)
 	return value
 
@@ -144,40 +138,37 @@ def An3(k1, k, p):
 		else:
 			value = 0.0
 	else:
-		value = np.array([])
-		#value = np.array([],dtype=np.longdouble)
+		value = []
 		for j in range(k1 - k - 1, k1 - 1 + 1):
-			value=np.append(value,(p ** j)/(scipy.misc.factorial(j - k1 + k + 1)))
-		value = np.sum(value[np.argsort(np.absolute(value))]) * scipy.misc.factorial(k) * np.exp(-p)
+			value.append((p ** j)/(scipy.misc.factorial(j - k1 + k + 1)))
+		value = math.fsum(value) * scipy.misc.factorial(k) * np.exp(-p)
 	#print("An3 ", k1, k, p, " :", value)
 	return value
 
 def Bn3(k, p):
-	value = np.array([])
-	#value = np.array([],dtype=np.longdouble)
+	value = []
 	if p == 0.0:
 		value = (((-1) ** k) + 1) / (1 + k)
 	elif p < 2.0:
 		if k % 2 == 0:
 			for i in range(0, 202, 2):
-				value=np.append(value,(p ** i) / (scipy.misc.factorial(i)) / (i + k + 1))
-			value = np.sum(value[np.argsort(np.absolute(value))]) * 2.0
+				value.append((p ** i) / (scipy.misc.factorial(i)) / (i + k + 1))
+			value = math.fsum(value) * 2.0
 		else:
 			for i in range(1, 203, 2):
-				value=np.append(value,(p ** i) / (scipy.misc.factorial(i)) / (i + k + 1))
-			value = np.sum(value[np.argsort(np.absolute(value))]) * -2.0
+				value.append((p ** i) / (scipy.misc.factorial(i)) / (i + k + 1))
+			value = math.fsum(value) * -2.0
 	else:
 		value = (((-1) ** (k + 1)) * An(k, -p)) - An(k, p)
 	#print("Bn3 ", k, p, " :", value)
 	return value
 
 def Fmn(m, n1, n2):
-	value = np.array([])
-	#value = np.array([],dtype=np.longdouble)
+	value = []
 	for sigma in range(int(((m - n1) + abs(m - n1))/2), min(m, n2) + 1):
-		value=np.append(value,((-1) ** sigma) * scipy.special.binom(n1, m - sigma) * scipy.special.binom(n2, sigma))
-	#print("Fmn ",m ,n1, n2, " :", np.sum(value[np.argsort(np.absolute(value))]))
-	return np.sum(value[np.argsort(np.absolute(value))])
+		value.append(((-1) ** sigma) * scipy.special.binom(n1, m - sigma) * scipy.special.binom(n2, sigma))
+	#print("Fmn ",m ,n1, n2, " :", math.fsum(value))
+	return math.fsum(value)
 
 def dlbt(l, lambda_, beta):
 	value = ((-1) ** (((l - beta))/2)) / (2 ** l)
@@ -185,17 +176,16 @@ def dlbt(l, lambda_, beta):
 	value = value * scipy.special.binom(l, (l - beta)/2) * scipy.special.binom(l + beta, beta - lambda_)
 	#print("dlbt ",l, lambda_, beta, " :", value)
 	return value
-
+	
 
 def galbet(l1, l2, lambda_, alpha, beta):
-	value = np.array([])
-	#value = np.array([],dtype=np.longdouble)
+	value = []
 	for i in range(0, lambda_ + 1):
-		value=np.append(value,((-1) ** i) * scipy.special.binom(lambda_, i) * dlbt(l1, lambda_, alpha + 2*lambda_ - 2*i))
-	value = np.sum(value[np.argsort(np.absolute(value))]) * dlbt(l2, lambda_, beta)
+		value.append(((-1) ** i) * scipy.special.binom(lambda_, i) * dlbt(l1, lambda_, alpha + 2*lambda_ - 2*i))
+	value = math.fsum(value) * dlbt(l2, lambda_, beta)
 	#print("galbet ",l1, lambda_, l2, lambda_, alpha, beta, " :", value)
 	return value
-
+	
 def overlap(n1, l1, n2, l2, lambda_, p, t):
 	p1 = 1 + t
 	p2 = 1 - t
@@ -211,101 +201,100 @@ def overlap(n1, l1, n2, l2, lambda_, p, t):
 	numerator = ((p1 ** (n1 + 0.5)) * ((p2 ** (n2 + 0.5))))
 	denominator = np.sqrt(scipy.misc.factorial(2 * n1)) * np.sqrt(scipy.misc.factorial(2 * n2))
 	b = numerator / denominator
-	ivalue = np.array([])
-	#ivalue = np.array([],dtype=np.longdouble)
+	ivalue = []
 	for i in range(a1, l1 + 1, 2):
-		jvalue = np.array([])
-		#jvalue = np.array([],dtype=np.longdouble)
+		jvalue = []
 		for j in range(b1, l2 + 1, 2):
-			kvalue = np.array([])
-			#kvalue = np.array([],dtype=np.longdouble)
+			kvalue = []
 			for k in range(0, i + j + 1):
-				mvalue = np.array([])
-				#mvalue = np.array([],dtype=np.longdouble)
+				mvalue = []
 				for m in range(0, n1 + n2 - i - j + 1):
-					mvalue=np.append(mvalue,Fmn(m, n1-i, n2 - j) * Bn3(m + k, pt) * An3(n1 + n2 + 1, n1 + n2 - i - j - m + k, p))
-				kvalue=np.append(kvalue,np.sum(mvalue[np.argsort(np.absolute(mvalue))]) * Fmn(k, i + lambda_, j - lambda_))
-			jvalue=np.append(jvalue,np.sum(kvalue[np.argsort(np.absolute(kvalue))]) * galbet(l1, l2, lambda_, i, j))
-		ivalue=np.append(ivalue,np.sum(jvalue[np.argsort(np.absolute(jvalue))]))
-	ivalue = np.sum(ivalue[np.argsort(np.absolute(ivalue))]) * b * ((-1) ** (l2 + lambda_))
-	print("overlap ",n1, l1, n2, l2, lambda_, p, t, " :", ivalue)
+					mvalue.append(Fmn(m, n1-i, n2 - j) * Bn3(m + k, pt) * An3(n1 + n2 + 1, n1 + n2 - i - j - m + k, p))
+				kvalue.append(math.fsum(mvalue) * Fmn(k, i + lambda_, j - lambda_))
+			jvalue.append(math.fsum(kvalue) * galbet(l1, l2, lambda_, i, j))
+		ivalue.append(math.fsum(jvalue))
+	ivalue = math.fsum(ivalue) * b * ((-1) ** (l2 + lambda_))
+	#print("overlap ",n1, l1, n2, l2, lambda_, p, t, " :", ivalue)
 	return ivalue
 
 def SlaterOverlap(n1, l1, m1, zeta1, n2, l2, m2, zeta2, r, theta, phi):
 	p = (r/2.0) * (zeta1 + zeta2)
 	t = (zeta1 - zeta2)/(zeta1 + zeta2)
-	S = np.array([])
-	#S = np.array([],dtype=np.longdouble)
-	for a1 in range(0, min(l1, l2) + 1):
-		S=np.append(S,tlm(a1, l1, m1, l2, m2, theta, phi) * overlap(n1, l1, n2, l2, a1, p, t))
-	print(S)
-	return np.sum(S[np.argsort(np.absolute(S))])
+	S = []
+	for lambda_ in range(0, min(l1, l2) + 1):
+		S.append(tlm(lambda_, l1, m1, l2, m2, theta, phi) * overlap(n1, l1, n2, l2, lambda_, p, t))
+	#print(S)
+	return math.fsum(S)
 
 def SlaterOverlapCartesian(n1, l1, m1, zeta1, x1, y1, z1, n2, l2, m2, zeta2, x2, y2, z2):
 	x = (x2 - x1) * 1.889725989
 	y = (y2 - y1) * 1.889725989
 	z = (z2 - z1) * 1.889725989
 	r = np.sqrt((x**2)+(y**2)+(z**2))
+	if x == 0.0:
+		phi = 0.0
+	else:
+		phi = np.arctan2(y,x)
 	if r == 0.0:
 		theta = 0.0
 	else:
 		theta = np.arccos(z/r)
-	if x == 0.0:
-		phi = 0.0
-	else:
-		phi = np.arctan2(y,x)#+(np.pi/2)
 	#print("")
 	#print("{: .3f} {: .3f} {: .3f}".format(x, y, z))
-	#print("{: .8f} {: .8f} {: .8f}".format(r, np.degrees(theta), np.degrees(phi)))
+	#print("{: .3f} {: .3f} {: .3f}".format(r, np.degrees(theta), np.degrees(phi)))
 	#print("{: .8f} {: .8f} {: .8f}".format(r, theta, phi))
 	return SlaterOverlap(n1, l1, m1, zeta1, n2, l2, m2, zeta2, r, theta, phi)
 
 print("---------1--------   ---------2--------  ------")
 print(" n,  l,  m, zeta  n,  l,  m, zeta, dist")
-print(" 3,  2,  1,  40,  3,  2,  1, 10, 1.00: {: .8e} should: {: .8e}.".format(SlaterOverlap( 3,  2,  1,  40.0,  3,  2,  1, 10.0, 1.0, 0.0, 0.0), -4.42287766988261e-4))
-print(" 4,  2,  1, 112,  4,  3,  1, 12, 1.00: {: .8e} should: {: .8e}.".format(SlaterOverlap( 4,  2,  1, 112.0,  4,  3,  1, 48.0, 1.0, 0.0, 0.0),  4.03505950326382e-17))
-print(" 5,  4,  4, 170,  5,  4,  4, 30, 1.00: {: .8e} should: {: .8e}.".format(SlaterOverlap( 5,  4,  4, 170.0,  5,  5,  5, 30.0, 1.0, 0.0, 0.0),  1.56193164484179e-14))
-#print("10,  7,  1,  72,  8,  2,  1, 48, 1.00: {: .8e} should: {: .8e}.".format(SlaterOverlap(10,  7,  1,  72.0,  8,  2,  1, 48.0, 1.0, 0.0, 0.0), -1.84189026173198e-10))
-#print("18, 12, 12,   8, 18, 12, 12, 32, 1.00: {: .8e} should: {: .8e}.".format(SlaterOverlap(12, 12, 12,   8.0, 18, 12, 12, 32.0, 1.0, 0.0, 0.0),  6.63931813696651e-5))
-#print("27,  8,  7,  28,  9,  8,  7, 42, 1.00: {: .8e} should: {: .8e}.".format(SlaterOverlap(27,  8,  7,  28.0,  9,  8,  7, 42.0, 1.0, 0.0, 0.0), -1.744238075196959e-4))
+#print(" 3,  2,  1,  40,  3,  2,  1, 10, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap( 3,  2,  1,  40.0,  3,  2,  1, 10.0, 1.0, 0.0, 0.0), -4.42287766988261e-4))
+#print(" 4,  2,  1, 112,  4,  3,  1, 12, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap( 4,  2,  1, 112.0,  4,  3,  1, 48.0, 1.0, 0.0, 0.0),  4.03505950326382e-17)) 
+#print(" 5,  4,  4, 170,  5,  4,  4, 30, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap( 5,  4,  4, 170.0,  5,  4,  4, 30.0, 1.0, 0.0, 0.0),  1.56193164484179e-14)) 
+#print(" 7,  3,  2, 255,  4,  3,  2, 45, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap( 7,  3,  2, 255.0,  4,  3,  2, 45.0, 1.0, 0.0, 0.0),  -1.7686105069788e-18)) 
+#print(" 9,  5,  3,  54,  8,  4,  3, 36, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap( 9,  5,  3, 54,  8,  4,  3, 36, 1.0, 0.0, 0.0), -5.465102430228e-8)) 
+#print("10,  7,  1,  72,  8,  2,  1, 48, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(10,  7,  1,  72.0,  8,  2,  1, 48.0, 1.0, 0.0, 0.0), -1.84189026173198e-10)) 
+#print("10,  9,  9,  24, 10,  9,  9,  6, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(10,  9,  9,  24.0, 10,  9,  9,  6.0, 1.0, 0.0, 0.0),  6.2312231819e-4)) 
+#print("13, 12, 12,25.25, 13, 12, 12,24.75, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(13, 12, 12,  25.25, 13, 12, 12, 24.75, 1.0, 0.0, 0.0), 1.35310560392e-4)) 
+#print("14, 13, 13,  21, 14, 13, 13,  9, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(14, 13, 13,  21.0, 14, 13, 13,  9.0, 1.0, 0.0, 0.0),  4.5355131215652e-3)) 
+#print("15, 14, 14,  15, 15, 14, 14, 15, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(15, 14, 14,  15.0, 15, 14, 14, 15.0, 1.0, 0.0, 0.0),  3.74722497038009e-2)) 
+#print("16, 15, 15, 35, 16, 15, 15, 35, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(16, 15, 15,  35.0, 16, 15, 15, 35.0, 1.0, 0.0, 0.0),  1.21686562253236e-6)) 
+#print("17,  8,  4, 55,  8,  7,  4, 45, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(17,  8,  4,  55.0,  8,  7,  4, 45.0, 1.0, 0.0, 0.0), -1.00640061354258e-6)) 
+#print("17, 16, 16, 12.5, 17, 16, 16, 37.5, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(17, 16, 16,  12.5, 17, 16, 16, 37.5, 1.0, 0.0, 0.0),  3.06769565185575e-5)) 
+#print("18, 12, 12,   8, 18, 12, 12, 32, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(18, 12, 12,   8.0, 18, 12, 12, 32.0, 1.0, 0.0, 0.0),  6.63931813696651e-5))
+#print("21, 10,  6,  45,  9,  8,  6, 45, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(21, 10,  6,  45.0,  9,  8,  6, 45.0, 1.0, 0.0, 0.0),  5.38980685350612e-5))
+#print("27,  8,  7,  28,  9,  8,  7, 42, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(27,  8,  7,  28.0,  9,  8,  7, 42.0, 1.0, 0.0, 0.0), -1.744238075196959e-4))
+#print("30, 10,  8,  35, 14, 10,  8, 35, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(30, 10,  8,  35.0, 14, 10,  8, 35.0, 1.0, 0.0, 0.0),  1.35074709592800e-2))
+#print("37,  8,  6,   4, 12, 10,  6, 16, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(37,  8,  6,   4.0, 12, 10,  6, 16.0, 1.0, 0.0, 0.0),  3.98219849004259e-14))
+#print("40,  4,  3,  24, 12,  4,  3,  6, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(40,  4,  3,  24.0, 12,  4,  3,  6.0, 1.0, 0.0, 0.0),  9.48379265599810e-2))
+#print("43, 10,  6,  36, 18,  8,  6, 84, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(43, 10,  6,  36.0, 18,  8,  6, 84.0, 1.0, 0.0, 0.0), -1.15907687123104e-4))
+#print("50,  4,  4,42.5, 50,  4,  4,7.5, 1.00: {: .15e} should: {: .15e}.".format(SlaterOverlap(50,  4,  4,  42.5, 50,  4,  4,  7.5, 1.0, 0.0, 0.0),  1.84395901037228e-12))
 
-#print("C 2s overlap with each hydrogen 1s")
-#print(" 2,  0,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,0,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 0.00000, 0.000000, 1.100000), 0.51331891))
-#print(" 2,  0,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,0,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 1.03709, 0.000000,-0.366667), 0.51331891))
-#print(" 2,  0,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,0,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855, 0.898146,-0.366667), 0.51331891))
-#print(" 2,  0,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,0,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855,-0.898146,-0.366667), 0.51331891))
+print("C 2s overlap with each hydrogen 1s")
+print(" 2,  0,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,0,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 0.00000, 0.000000, 1.100000), 0.51331891))
+print(" 2,  0,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,0,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 1.03709, 0.000000,-0.366667), 0.51331891))
+print(" 2,  0,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,0,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855, 0.898146,-0.366667), 0.51331891))
+print(" 2,  0,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,0,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855,-0.898146,-0.366667), 0.51331891))
 
-#print("C 2pz overlap with each hydrogen 1s")
-#print(" 2,  1,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 0.00000, 0.000000, 1.100000), 0.48549314))
-#print(" 2,  1,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 1.03709, 0.000000,-0.366667),-0.1618))
-#print(" 2,  1,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855, 0.898146,-0.366667),-0.1618))
-#print(" 2,  1,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855,-0.898146,-0.366667),-0.1618))
+print("C 2pz overlap with each hydrogen 1s")
+print(" 2,  1,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 0.00000, 0.000000, 1.100000), 0.48549314))
+print(" 2,  1,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 1.03709, 0.000000,-0.366667),-0.1618))
+print(" 2,  1,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855, 0.898146,-0.366667),-0.1618))
+print(" 2,  1,  0,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,0,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855,-0.898146,-0.366667),-0.1618))
 
-#print("C 2px overlap with each hydrogen 1s")
-#print(" 2,  1,  1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 0.00000, 0.000000, 1.100000), 0.0000))
-#print(" 2,  1,  1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 1.03709, 0.000000,-0.366667),-0.457727343959))
-#print(" 2,  1,  1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855, 0.898146,-0.366667), 0.2288654045560783))
-#print(" 2,  1,  1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855,-0.898146,-0.366667), 0.2288654045560783))
+print("C 2px overlap with each hydrogen 1s")
+print(" 2,  1,  1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 0.00000, 0.000000, 1.100000), 0.0000))
+print(" 2,  1,  1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 1.03709, 0.000000,-0.366667), 0.457727343959))
+print(" 2,  1,  1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855, 0.898146,-0.366667), -0.228865383492))
+print(" 2,  1,  1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855,-0.898146,-0.366667), -0.228665383492))
 
-#print("C 2py overlap with each hydrogen 1s")
-#print(" 2,  1,  -1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,-1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 0.00000, 0.000000, 1.100000), 0.0000))
-#print(" 2,  1,  -1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,-1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 1.03709, 0.000000,-0.366667), 0.0000))
-#print(" 2,  1,  -1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,-1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855, 0.898146,-0.366667), 0.3964))
-#print(" 2,  1,  -1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,-1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855,-0.898146,-0.366667),-0.3964))
+print("C 2py overlap with each hydrogen 1s")
+print(" 2,  1,  -1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,-1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 0.00000, 0.000000, 1.100000), 0.0000))
+print(" 2,  1,  -1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,-1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2, 1.03709, 0.000000,-0.366667), 0.0000))
+print(" 2,  1,  -1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,-1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855, 0.898146,-0.366667), 0.3964))
+print(" 2,  1,  -1,  1.625,  1,  0,   0,  1.200, 2.0787: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(2,1,-1,1.625,0.00000,0.00000,0.00000,1,0,0,1.2,-0.51855,-0.898146,-0.366667),-0.3964))
 
-#print("H 1s overlap with each (other) hydrogen 1s")
-#print(" 1,  0,  0,  1.200,  1,  0,   0,  1.200, 3.395: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(1,0,0,1.200,0.00000,0.000000,1.100000,1,0,0,1.2, 0.00000, 0.000000, 1.100000), 1.0000))
-#print(" 1,  0,  0,  1.200,  1,  0,   0,  1.200, 3.395: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(1,0,0,1.200,0.00000,0.000000,1.100000,1,0,0,1.2, 1.03709, 0.000000,-0.366667), 0.18047793195759))
-#print(" 1,  0,  0,  1.200,  1,  0,   0,  1.200, 3.395: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(1,0,0,1.200,0.00000,0.000000,1.100000,1,0,0,1.2,-0.51855, 0.898146,-0.366667), 0.18047793195759))
-#print(" 1,  0,  0,  1.200,  1,  0,   0,  1.200, 3.395: {: .8f} should: {: .8f}.".format(SlaterOverlapCartesian(1,0,0,1.200,0.00000,0.000000,1.100000,1,0,0,1.2,-0.51855,-0.898146,-0.366667), 0.18047793195759))
-
-#print("Demonstration of orthonormality")
-#print(" 2,  0,  0,  1.625,  2,  1,   0,  1.625, 0.0000: {: .8f} should: {: .8f}.".format(SlaterOverlap(2, 0, 0, 1.625, 2, 1, 0, 1.625, 0.0, 0.0, 0.0), 0.0))
-#print(" 2,  1,  0,  1.625,  2,  1,   1,  1.625, 0.0000: {: .8f} should: {: .8f}.".format(SlaterOverlap(2, 1, 0, 1.625, 2, 1, 1, 1.625, 0.0, 0.0, 0.0), 0.0))
-#print(" 2,  1,  0,  1.625,  2,  1,   0,  1.625, 0.0000: {: .8f} should: {: .8f}.".format(SlaterOverlap(2, 1, 0, 1.625, 2, 1, 0, 1.625, 0.0, 0.0, 0.0), 1.0))
-#print(" 2,  1,  0,  1.625,  2,  1,  -1,  1.625, 0.0000: {: .8f} should: {: .8f}.".format(SlaterOverlap(2, 1, 0, 1.625, 2, 1, -1, 1.625, 0.0, 0.0, 0.0), 0.0))
-
-#print("tlm: {: .20e} should be  1.11022302462516e-16".format(tlm(0,2,1,2,1,0.0,0.0)))
-#print("tlm: {: .20e} should be -1.52655665885959e-16".format(tlm(2,2,1,2,1,0.0,0.0)))
-#print("tlm: {: .20e} should be  1.11022302462516e-16".format(tlm(2,2,1,3,1,0.0,0.0)))
-#print("tlm: {: .20e} should be  0.0".format(tlm(0,2,1,3,1,0.0,0.0)))
+print("Demonstration of orthonormality")
+print(" 2,  0,  0,  1.625,  2,  1,   0,  1.625, 0.0000: {: .8f} should: {: .8f}.".format(SlaterOverlap(2, 0, 0, 1.625, 2, 1, 0, 1.625, 0.0, 0.0, 0.0), 0.0))
+print(" 2,  1,  0,  1.625,  2,  1,   1,  1.625, 0.0000: {: .8f} should: {: .8f}.".format(SlaterOverlap(2, 1, 0, 1.625, 2, 1, 1, 1.625, 0.0, 0.0, 0.0), 0.0))
+print(" 2,  1,  0,  1.625,  2,  1,   0,  1.625, 0.0000: {: .8f} should: {: .8f}.".format(SlaterOverlap(2, 1, 0, 1.625, 2, 1, 0, 1.625, 0.0, 0.0, 0.0), 1.0))
+print(" 2,  1,  0,  1.625,  2,  1,  -1,  1.625, 0.0000: {: .8f} should: {: .8f}.".format(SlaterOverlap(2, 1, 0, 1.625, 2, 1, -1, 1.625, 0.0, 0.0, 0.0), 0.0))
